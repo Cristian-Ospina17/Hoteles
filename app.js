@@ -1,28 +1,83 @@
-async function obtenerPokemones() {
+// ==============================
+// Feature 5 - Renderizado Final
+// Integración completa
+// ==============================
+
+
+
+async function obtenerListaPokemones() {
+    const url = "https://pokeapi.co/api/v2/pokemon?limit=10";
+
+    const respuesta = await fetch(url);
+
+    if (!respuesta.ok) {
+        throw new Error(`Error HTTP: ${respuesta.status}`);
+    }
+
+    const data = await respuesta.json();
+    return data.results;
+}
+
+
+
+async function obtenerDetalles(pokemones) {
+    const promesas = pokemones.map(pokemon =>
+        fetch(pokemon.url).then(res => {
+            if (!res.ok) {
+                throw new Error("Error al obtener detalles");
+            }
+            return res.json();
+        })
+    );
+
+    return Promise.all(promesas);
+}
+
+
+
+function renderizarPokemones(pokemones) {
+    const contenedor = document.getElementById("pokemon-container");
+
+    contenedor.innerHTML = "";
+
+    pokemones.forEach(pokemon => {
+
+        const columna = document.createElement("div");
+        columna.className = "col-md-4 col-sm-6 col-12 mb-4";
+
+        columna.innerHTML = `
+            <div class="card shadow-sm h-100">
+                <img src="${pokemon.sprites.front_default}"
+                     class="card-img-top p-3"
+                     alt="${pokemon.name}">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-capitalize">${pokemon.name}</h5>
+                </div>
+            </div>
+        `;
+
+        contenedor.appendChild(columna);
+    });
+}
+
+
+
+async function iniciarAplicacion() {
     try {
-        const respuesta = await fetch("https://pokeapi.co/api/v2/pokemon?limit=10");
-        const data = await respuesta.json();
-
-        const pokemonesProcesados = await Promise.all(
-            data.results.map(async (pokemon) => {
-                const detalleRespuesta = await fetch(pokemon.url);
-                const detalle = await detalleRespuesta.json();
-
-                return {
-                    id: detalle.id,
-                    nombre: detalle.name,
-                    imagen: detalle.sprites.front_default,
-                    tipos: detalle.types.map(t => t.type.name)
-                };
-            })
-        );
-
-        console.log(pokemonesProcesados);
-        return pokemonesProcesados;
+        const listaBase = await obtenerListaPokemones();
+        const detalles = await obtenerDetalles(listaBase);
+        renderizarPokemones(detalles);
 
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error general:", error);
+
+        document.getElementById("pokemon-container").innerHTML = `
+            <div class="alert alert-danger text-center">
+                No se pudieron cargar los Pokémon.
+            </div>
+        `;
     }
 }
 
-obtenerPokemones();
+
+document.addEventListener("DOMContentLoaded", iniciarAplicacion);
