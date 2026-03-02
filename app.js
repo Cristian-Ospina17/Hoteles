@@ -1,51 +1,84 @@
-// Feature 2 - Consumo de la API Pokémon
+// ==============================
+// Feature 5 - Renderizado Final
+// Integración y optimización
+// ==============================
 
+
+// Obtener lista base de Pokémon
 async function obtenerPokemones() {
     const url = "https://pokeapi.co/api/v2/pokemon?limit=10";
 
-    try {
-        const respuesta = await fetch(url);
+    const respuesta = await fetch(url);
 
-        if (!respuesta.ok) {
-            throw new Error(`Error: ${respuesta.status}`);
-        }
-
-        const data = await respuesta.json();
-        return data.results;
-
-    } catch (error) {
-        console.error("Error al consumir la API:", error);
+    if (!respuesta.ok) {
+        throw new Error(`Error HTTP: ${respuesta.status}`);
     }
+
+    const data = await respuesta.json();
+    return data.results;
 }
 
 
-// Feature 4 - Mostrar con Bootstrap Grid
+// Obtener detalles individuales (procesamiento real de datos)
+async function obtenerDetalles(pokemones) {
+    const promesas = pokemones.map(pokemon =>
+        fetch(pokemon.url).then(res => {
+            if (!res.ok) {
+                throw new Error("Error al obtener detalles");
+            }
+            return res.json();
+        })
+    );
 
-function mostrarPokemones(pokemones) {
+    return Promise.all(promesas);
+}
+
+
+// Renderizar en el DOM
+function renderizarPokemones(pokemones) {
     const contenedor = document.getElementById("pokemon-container");
 
-    pokemones.forEach((pokemon, index) => {
+    // Limpiar antes de renderizar
+    contenedor.innerHTML = "";
 
-        const card = `
-        <div class="col-md-4 col-sm-6 col-12">
+    pokemones.forEach(pokemon => {
+
+        const columna = document.createElement("div");
+        columna.className = "col-md-4 col-sm-6 col-12";
+
+        columna.innerHTML = `
             <div class="card shadow-sm h-100">
-                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${index + 1}.png"
+                <img src="${pokemon.sprites.front_default}"
                      class="card-img-top p-3"
                      alt="${pokemon.name}">
                 <div class="card-body text-center">
                     <h5 class="card-title text-capitalize">${pokemon.name}</h5>
                 </div>
             </div>
-        </div>
         `;
 
-        contenedor.innerHTML += card;
+        contenedor.appendChild(columna);
     });
 }
 
 
-// Ejecutar cuando cargue la página
-document.addEventListener("DOMContentLoaded", async () => {
-    const pokemones = await obtenerPokemones();
-    mostrarPokemones(pokemones);
-});
+// Inicialización principal
+async function iniciarAplicacion() {
+    try {
+        const listaBase = await obtenerPokemones();
+        const detalles = await obtenerDetalles(listaBase);
+        renderizarPokemones(detalles);
+
+    } catch (error) {
+        console.error("Error general:", error);
+
+        document.getElementById("pokemon-container").innerHTML = `
+            <div class="alert alert-danger text-center">
+                No se pudieron cargar los Pokémon.
+            </div>
+        `;
+    }
+}
+
+
+document.addEventListener("DOMContentLoaded", iniciarAplicacion);
