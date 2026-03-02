@@ -1,11 +1,11 @@
 // ==============================
 // Feature 5 - Renderizado Final
-// Integración y optimización
+// Integración completa
 // ==============================
 
 
-// Obtener lista base de Pokémon
-async function obtenerPokemones() {
+
+async function obtenerListaPokemones() {
     const url = "https://pokeapi.co/api/v2/pokemon?limit=10";
 
     const respuesta = await fetch(url);
@@ -19,7 +19,7 @@ async function obtenerPokemones() {
 }
 
 
-// Obtener detalles individuales (procesamiento real de datos)
+
 async function obtenerDetalles(pokemones) {
     const promesas = pokemones.map(pokemon =>
         fetch(pokemon.url).then(res => {
@@ -34,17 +34,16 @@ async function obtenerDetalles(pokemones) {
 }
 
 
-// Renderizar en el DOM
+
 function renderizarPokemones(pokemones) {
     const contenedor = document.getElementById("pokemon-container");
 
-    // Limpiar antes de renderizar
     contenedor.innerHTML = "";
 
     pokemones.forEach(pokemon => {
 
         const columna = document.createElement("div");
-        columna.className = "col-md-4 col-sm-6 col-12";
+        columna.className = "col-md-4 col-sm-6 col-12 mb-4";
 
         columna.innerHTML = `
             <div class="card shadow-sm h-100">
@@ -62,10 +61,10 @@ function renderizarPokemones(pokemones) {
 }
 
 
-// Inicialización principal
+
 async function iniciarAplicacion() {
     try {
-        const listaBase = await obtenerPokemones();
+        const listaBase = await obtenerListaPokemones();
         const detalles = await obtenerDetalles(listaBase);
         renderizarPokemones(detalles);
 
